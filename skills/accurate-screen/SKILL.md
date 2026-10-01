@@ -6,7 +6,7 @@ description: "Accurate & fast screen analysis for Windows: UIA text extraction (
 # Accurate Screen (Windows 정밀 화면 분석)
 
 스크린샷을 "찍어서 찾아보는" 대신 **의도 → 핸들 → 좌표 → 캡처/추출 → 잘라 보기** 순서로
-분석한다. 근거: 이 스킬 저장소 상위의 `research/`(전 항목 실측).
+분석한다. 근거: 개발 저장소 `C:\Develop\agents-works\accurate-screen\research\`(전 항목 실측).
 
 왜 필요한가 — 전체 화면 캡처 → 모델 판독의 3대 실패(연구 02에서 재현):
 
