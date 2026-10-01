@@ -1,0 +1,4 @@
+EXPERIMENT TARGET FILE
+이 파일은 accurate-screen 연구의 통제 텍스트다.
+TOKEN-BETA-7313 / GAMMA-556 / 델타-관찰선
+작은 글자 판독 시험: ZETA-9917-Q
