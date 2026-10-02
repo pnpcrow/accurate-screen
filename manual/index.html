@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>accurate-screen — 누구나 이해하는 사용 설명서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1E293B; --sub:#475569; --line:#E2E8F0; --bg:#F8FAFC;
+    --accent:#0284C7; --accent-soft:#EFF6FF; --ok:#059669; --ok-soft:#F0FDF4;
+    --warn:#D97706; --warn-soft:#FFFBEB; --bad:#DC2626; --bad-soft:#FEF2F2;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Noto Sans KR',system-ui,-apple-system,'Malgun Gothic',sans-serif; color:var(--ink); background:var(--bg); line-height:1.75; font-size:16px;}
+  .page{max-width:860px; margin:0 auto; padding:0 20px 64px;}
+  header.cover{background:linear-gradient(160deg,#0C4A6E 0%,#0284C7 70%,#38BDF8 100%); color:#fff; padding:56px 20px 44px; text-align:center;}
+  header.cover h1{font-size:34px; font-weight:900; letter-spacing:-0.5px;}
+  header.cover .sub{font-size:17px; opacity:.95; margin-top:10px;}
+  header.cover .badges{margin-top:18px;}
+  .badge{display:inline-block; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.4); border-radius:999px; padding:4px 14px; font-size:13px; margin:4px 4px;}
+  section{background:#fff; border:1px solid var(--line); border-radius:14px; padding:28px 30px; margin-top:24px;}
+  h2{font-size:22px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:10px;}
+  h2 .no{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:8px; background:var(--accent-soft); color:var(--accent); font-size:15px; font-weight:900; flex:none;}
+  h3{font-size:16px; font-weight:700; margin:16px 0 6px;}
+  p{margin:8px 0; color:var(--ink);}
+  .muted{color:var(--sub); font-size:14px;}
+  .say{background:var(--accent-soft); border-left:4px solid var(--accent); border-radius:0 10px 10px 0; padding:12px 16px; margin:14px 0; font-weight:500;}
+  figure{margin:18px 0 6px;}
+  figure svg{width:100%; height:auto; display:block;}
+  figcaption{text-align:center; color:var(--sub); font-size:13px; margin-top:6px;}
+  table{width:100%; border-collapse:collapse; margin:14px 0; font-size:15px;}
+  th,td{border:1px solid var(--line); padding:9px 12px; text-align:left; vertical-align:top;}
+  th{background:#F1F5F9; font-weight:700; white-space:nowrap;}
+  td.num{white-space:nowrap; font-variant-numeric:tabular-nums;}
+  .cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:14px 0;}
+  .card{border:1px solid var(--line); border-radius:12px; padding:14px 16px; background:#fff;}
+  .card .t{font-weight:700; margin-bottom:4px;}
+  .card.red{background:var(--bad-soft); border-color:#FECACA;}
+  .card.green{background:var(--ok-soft); border-color:#BBF7D0;}
+  .card.amber{background:var(--warn-soft); border-color:#FDE68A;}
+  ol.steps{counter-reset:step; list-style:none; margin:10px 0;}
+  ol.steps>li{counter-increment:step; position:relative; padding:14px 16px 14px 58px; border:1px solid var(--line); border-radius:12px; margin-bottom:12px; background:#fff;}
+  ol.steps>li::before{content:counter(step); position:absolute; left:14px; top:14px; width:30px; height:30px; border-radius:50%; background:var(--accent); color:#fff; font-weight:900; display:flex; align-items:center; justify-content:center; font-size:15px;}
+  .result{margin-top:8px; font-size:14px; color:var(--ok); font-weight:700;}
+  code{background:#F1F5F9; border:1px solid var(--line); border-radius:6px; padding:1px 7px; font-size:0.88em; font-family:Consolas,'D2Coding',monospace; color:#0F172A;}
+  .en-tldr{margin-top:24px; background:#fff; border:1px dashed var(--line); border-radius:14px; padding:22px 26px; color:var(--sub); font-size:14px;}
+  .en-tldr b{color:var(--ink);}
+  footer{text-align:center; color:var(--sub); font-size:13px; margin-top:32px;}
+  footer a{color:var(--accent);}
+  a{color:var(--accent);}
+  @media print{
+    body{background:#fff;}
+    section{border:none; padding:8px 0;}
+    header.cover{border-radius:0;}
+    /* 페이지 나눔 보호: 카드·단계·도해·표가 경계에서 잘리지 않도록 한다 */
+    .card, ol.steps>li, .say, figure, table, tr, .en-tldr { break-inside: avoid; }
+    h2, h3 { break-after: avoid; }
+    p { orphans: 3; widows: 3; }
+  }
+  /* 웹/인쇄 공통: 표는 작으므로 항상 한 덩어리로 유지한다 */
+</style>
+</head>
+<body>
+<header class="cover">
+  <h1>accurate-screen</h1>
+  <div class="sub">가려진 창까지 이름만으로 읽어 내는 화면 분석 스킬 · 누구나 따라 이해하는 사용 설명서</div>
+  <div class="badges">
+    <span class="badge">🪟 Windows 전용</span>
+    <span class="badge">🤖 ZCode · GLM 세션용</span>
+    <span class="badge">🖱️ Computer Use 없이도 동작</span>
+  </div>
+</header>
+
+<div class="page">
+
+<section>
+  <h2><span class="no">1</span>이것이 무엇인가요?</h2>
+  <p>accurate-screen은 <b>화면 위 앱의 내용을 빠르고 정확하게 읽어 내는 스킬</b>입니다.</p>
+  <div class="say">비유하면, 온 책상을 한 장 찍어 눈으로 뒤지는 대신 <b>책상 위 사물마다 붙어 있는 자기 앨범에서 그림을 직접 꺼내 보는</b> 방법으로 바꾸는 도구예요.</div>
+  <p>창(윈도우)은 열리는 순간 자기만의 그림 앨범, 즉 <b>출력 버퍼</b>를 만듭니다. 이 앨범은 화면 앞쪽을 누가 가리든 그대로 살아 있어요. accurate-screen은 그 앨범에서 <b>이름만으로</b> 그림을 꺼내 옵니다.</p>
+  <figure>
+    <svg viewBox="0 0 800 250" role="img" aria-label="전체 화면 촬영 방식과 출력 버퍼 직접 꺼내기 방식 비교">
+      <rect x="0" y="0" width="800" height="250" fill="#F8FAFC"/>
+      <!-- 왼쪽: 전체 화면 사진 -->
+      <rect x="20" y="20" width="360" height="200" rx="12" fill="#FEF2F2" stroke="#FECACA"/>
+      <text x="200" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#B91C1C">옛 방식 : 전체 화면을 사진으로</text>
+      <rect x="60" y="70" width="280" height="90" rx="8" fill="#E2E8F0"/>
+      <rect x="80" y="86" width="130" height="60" rx="6" fill="#94A3B8"/>
+      <rect x="150" y="100" width="170" height="52" rx="6" fill="#475569"/>
+      <text x="235" y="128" text-anchor="middle" font-size="13" fill="#F8FAFC">앞 창이 가린다 ✕</text>
+      <text x="200" y="185" text-anchor="middle" font-size="13" fill="#7F1D1D">뒤의 내용은 사진에 아예 없음 · 작은 글은 뭉개짐</text>
+      <text x="200" y="207" text-anchor="middle" font-size="13" fill="#7F1D1D">누가 만든 그림인지 알 수 없음</text>
+      <!-- 화살표 -->
+      <path d="M398 120 L428 120" stroke="#94A3B8" stroke-width="4" marker-end="url(#arr)"/>
+      <defs><marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#94A3B8"/></marker></defs>
+      <!-- 오른쪽: 앨범에서 직접 -->
+      <rect x="440" y="20" width="340" height="200" rx="12" fill="#F0FDF4" stroke="#BBF7D0"/>
+      <text x="610" y="48" text-anchor="middle" font-size="15" font-weight="700" fill="#047857">새 방식 : 이름으로 앨범에서 직접</text>
+      <g>
+        <rect x="470" y="70" width="120" height="80" rx="8" fill="#fff" stroke="#94A3B8"/>
+        <text x="530" y="105" text-anchor="middle" font-size="12" fill="#475569">메모장</text>
+        <rect x="494" y="112" width="72" height="30" rx="4" fill="#BFDBFE"/>
+        <rect x="606" y="78" width="120" height="80" rx="8" fill="#fff" stroke="#94A3B8"/>
+        <text x="666" y="105" text-anchor="middle" font-size="12" fill="#475569">게임</text>
+        <rect x="630" y="112" width="72" height="30" rx="4" fill="#FDE68A"/>
+      </g>
+      <text x="610" y="185" text-anchor="middle" font-size="13" fill="#065F46">가려도 · 뒤에 숨어도 온전히 꺼냄 ✓</text>
+      <text x="610" y="207" text-anchor="middle" font-size="13" fill="#065F46">소속 앱 정보(출처)까지 함께 전달</text>
+    </svg>
+    <figcaption>전체 화면을 촬영하는 대신, 창마다 가진 출력 버퍼에서 직접 꺼내 옵니다.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2><span class="no">2</span>왜 필요한가요? — 사진 방식의 세 가지 실패</h2>
+  <p>전체 화면을 찍어서 AI에게 보여 주는 방식은 실제 시험에서 세 가지로 실패했습니다(research/02).</p>
+  <div class="cards">
+    <div class="card red"><div class="t">🙈 가림 손실</div>앞의 창에 가려진 내용은 <b>사진 자체에 없고</b>, 사진엔 그 흔적도 남지 않아요. AI는 "내용이 없다"고 오판합니다.</div>
+    <div class="card red"><div class="t">🎭 귀속 불능</div>테두리·제목이 없는 창의 그림은 <b>누구 것인지 픽셀만으로 알 수 없어요.</b> 비전 모델도 원리적으로 불가능합니다.</div>
+    <div class="card red"><div class="t">🔍 글자 붕괴</div>큰 화면을 줄여서 보여 주면 작은 글자가 8픽셀 아래로 부서져 <b>읽을 수 없게</b> 됩니다.</div>
+  </div>
+  <p class="muted">accurate-screen은 이 세 문제를 "사진을 잘 찍는" 것으로가 아니라 <b>방법 자체를 바꿔서</b> 피합니다.</p>
+</section>
+
+<section>
+  <h2><span class="no">3</span>시작하기 전에 — 준비물 체크리스트</h2>
+  <table>
+    <tr><th>준비물</th><th>확인</th><th>설명</th></tr>
+    <tr><td>Windows 10/11</td><td>필수</td><td>측정된 모든 경로가 Windows용입니다.</td></tr>
+    <tr><td>ZCode (node_repl 사용 가능)</td><td>필수</td><td>스킬의 도우미(screen-read.mjs)를 실행하는 통입니다.</td></tr>
+    <tr><td>Computer Use 플러그인</td><td>자동</td><td>이미지 처리용 sharp를 여기서 빌려 씁니다. 설치돼 있으면 끝.</td></tr>
+    <tr><td>비전 모델 세션 (예: GLM-5.3-Flash)</td><td>이미지를 보일 때만</td><td>비전이 없는 세션(GLM-5.3)이면 <b>도구 전용 모드</b>로 텍스트만 읽습니다 — 그래도 분석은 계속 됩니다.</td></tr>
+  </table>
+  <p class="muted">Computer Use(마우스·키보드 조작 기능)를 켜지 않아도 이 스킬의 '읽기'는 전부 동작합니다.</p>
+</section>
+
+<section>
+  <h2><span class="no">4</span>작동 방식 — 네 단계</h2>
+  <figure>
+    <svg viewBox="0 0 800 120" role="img" aria-label="4단계 흐름">
+      <rect x="4" y="20" width="180" height="70" rx="10" fill="#EFF6FF" stroke="#BFDBFE"/>
+      <text x="94" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#0C4A6E">① 의도 선언</text>
+      <text x="94" y="72" text-anchor="middle" font-size="12" fill="#475569">무엇을 알고 싶은가</text>
+      <path d="M188 55 L216 55" stroke="#94A3B8" stroke-width="3" marker-end="url(#arr2)"/>
+      <rect x="220" y="20" width="180" height="70" rx="10" fill="#EFF6FF" stroke="#BFDBFE"/>
+      <text x="310" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#0C4A6E">② 이름으로 겨냥</text>
+      <text x="310" y="72" text-anchor="middle" font-size="12" fill="#475569">창 제목·앱 이름 검색</text>
+      <path d="M404 55 L432 55" stroke="#94A3B8" stroke-width="3" marker-end="url(#arr2)"/>
+      <rect x="436" y="20" width="180" height="70" rx="10" fill="#EFF6FF" stroke="#BFDBFE"/>
+      <text x="526" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#0C4A6E">③ 읽기</text>
+      <text x="526" y="72" text-anchor="middle" font-size="12" fill="#475569">UIA 텍스트 또는 버퍼 캡처</text>
+      <path d="M620 55 L648 55" stroke="#94A3B8" stroke-width="3" marker-end="url(#arr2)"/>
+      <rect x="652" y="20" width="144" height="70" rx="10" fill="#EFF6FF" stroke="#BFDBFE"/>
+      <text x="724" y="48" text-anchor="middle" font-size="14" font-weight="700" fill="#0C4A6E">④ 근거 확인</text>
+      <text x="724" y="72" text-anchor="middle" font-size="12" fill="#475569">크롭 확대 · 리본</text>
+      <defs><marker id="arr2" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#94A3B8"/></marker></defs>
+    </svg>
+    <figcaption>전체 흐름: 캡처는 항상 "겨냥한 창 하나"에서만 일어납니다.</figcaption>
+  </figure>
+
+  <ol class="steps">
+    <li><b>의도를 먼저 적는다.</b> "메모장에 적힌 코드 값을 알고 싶다"처럼 한 줄로 씁니다.
+      <div class="result">무엇을 볼지 미리 정해면, 쓸데없는 큰 사진을 찍는 일이 사라집니다.</div></li>
+    <li><b>이름으로 창을 겨냥한다.</b> <code>findWindows("메모장")</code> — 화면에 안 보이는 창도 목록에서 바로 찾아 냅니다(제목·앱 이름 검색).
+      <div class="result">가려져 있어도 pid(창의 주민번호)와 좌표가 나옵니다. 이 시점에서 찾기는 끝.</div></li>
+    <li><b>알맞은 방법으로 읽는다.</b> 글자·값이 목적이면 UIA로 텍스트를 직접 읽습니다(이미지 0장, 약 40ms). 모양·그림이 목적이면 창의 <b>출력 버퍼에서 직접</b> 캡처합니다(약 0.25초). 가려진 창도, 동영상·게임처럼 계속 그림이 바뀌는 창도 온전히 담깁니다.
+      <div class="result">사진 방식과 달리 가림에 강하고, 소속 앱 정보가 결과에 함께 붙습니다.</div></li>
+    <li><b>필요한 부분만 크게 확인한다.</b> UIA가 알려 준 좌표로 그 부분만 잘라 2배 확대해 봅니다. 캡처에는 <b>빨간 리본</b>(앱 이름·pid·좌표)이 붙어 어느 창의 그림인지 절대 헷갈리지 않습니다.
+      <div class="result">분석 면적이 1/100로 줄어 작은 글자도 선명하게 읽힙니다.</div></li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="no">5</span>얻을 수 있는 효과</h2>
+  <figure>
+    <svg viewBox="0 0 800 170" role="img" aria-label="관찰 비용 비교 막대">
+      <text x="10" y="30" font-size="14" font-weight="700" fill="#1E293B">창 하나 읽는 데 걸리는 시간</text>
+      <text x="10" y="66" font-size="13" fill="#B91C1C">기본 경로 (스크린샷+트리)</text>
+      <rect x="230" y="50" width="540" height="24" rx="6" fill="#FCA5A5"/>
+      <text x="762" y="67" font-size="13" font-weight="700" fill="#B91C1C">약 2초</text>
+      <text x="10" y="112" font-size="13" fill="#047857">accurate-screen (버퍼 캡처)</text>
+      <rect x="230" y="96" width="68" height="24" rx="6" fill="#6EE7B7"/>
+      <text x="308" y="113" font-size="13" font-weight="700" fill="#047857">약 0.3초</text>
+      <text x="10" y="150" font-size="13" fill="#047857">텍스트만 필요할 때 (UIA)</text>
+      <rect x="230" y="134" width="12" height="24" rx="6" fill="#34D399"/>
+      <text x="252" y="151" font-size="13" font-weight="700" fill="#047857">약 0.04초 · 이미지 0장</text>
+    </svg>
+    <figcaption>측정값: 기본 경로 약 1.9~2.4초 → 버퍼 캡처 0.22~0.36초 (research/04, 07)</figcaption>
+  </figure>
+  <table>
+    <tr><th>효과</th><th>이전</th><th>적용 후</th></tr>
+    <tr><td>속도 (창 하나 읽기)</td><td class="num">약 2초</td><td class="num"><b>약 0.3초</b> · 텍스트는 0.04초</td></tr>
+    <tr><td>가려진 창</td><td>보통 실패 (활성화 필요)</td><td><b>이름만으로 성공</b> — 동영상·게임도 생화면 그대로</td></tr>
+    <tr><td>귀속 (누구 그림인가)</td><td>픽셀 추측 → 오답 가능</td><td><b>리본·결과표로 확정 인용</b> — 쌍둥이 창 시험에서 오판 0건</td></tr>
+    <tr><td>AI 컨텍스트 소모</td><td class="num">관찰당 수십 KB</td><td class="num">수백 바이트 (필요한 것만)</td></tr>
+    <tr><td>Computer Use 작업 전체</td><td>기존 방식 그대로</td><td class="num">읽기 위주 작업 기준 체감 30~50% 절감 (추정)</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="no">6</span>문제가 생겼을 때 — 증상 → 해결</h2>
+  <table>
+    <tr><th style="width:45%">증상</th><th>해결</th></tr>
+    <tr><td>결과에 <code>blank: true</code>가 나옴 (하얀/빈 그림)</td><td>그 창은 지금 그림을 그릴 수 없는 뒷배경 상태입니다. 재시도하지 말고 <b>UIA 텍스트 경로</b>(<code>scanText</code>)로 전환하세요.</td></tr>
+    <tr><td><code>invalid_target</code> 오류가 나옴</td><td>창이 <b>최소화</b>되어 있으면 출력 버퍼가 잠시 해제됩니다. <code>ShowWindowAsync(창핸들, 9)</code>으로 복구한 뒤 다시 캡처하거나, UIA 텍스트로 읽으세요.</td></tr>
+    <tr><td><code>ambiguous</code>(이름이 겹친다) 오류</td><td>같은 이름의 창이 여러 개입니다. 검색어를 더 길게 쓰거나 pid로 직접 지정하세요. 쌍둥이 창은 절대 겉모습으로 고르지 않습니다.</td></tr>
+    <tr><td>이미지를 봐도 내용을 모르겠음</td><td>세션 모델이 비전이 아닐 수 있습니다(GLM-5.3 등). 같은 플랜의 비전 모델로 바꾸거나 <b>도구 전용 모드</b>(텍스트만)로 진행하세요.</td></tr>
+    <tr><td>전체 화면 사진에서 내용이 빈 채로 나옴</td><td>가림입니다. 전체 화면은 '무엇이 떠 있는지 훑기'용이고, 내용 읽기는 반드시 창 단위 캡처를 쓰세요.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2><span class="no">7</span>용어 사전</h2>
+  <table>
+    <tr><th>어려운 말</th><th>쉬운 말</th></tr>
+    <tr><td>출력 버퍼</td><td>창이 자기 그림을 보관하는 <b>개인 앨범</b>. 화면에 가려져도 앨범은 그대로입니다.</td></tr>
+    <tr><td>UIA (접근성 트리)</td><td>앱이 스스로 내놓는 <b>글자·단추의 목록표</b>. 사진 없이 내용을 읽게 해 줍니다.</td></tr>
+    <tr><td style="white-space:nowrap">cloaked (클로킹)</td><td>겉보기엔 있지만 화면에 그림을 그리지 않는 상태. 사진엔 빈 것으로 나옵니다.</td></tr>
+    <tr><td>digest</td><td>캡처에 함께 붙는 <b>출처 스티커</b>(앱 이름·pid·좌표). 귀속의 근거가 됩니다.</td></tr>
+    <tr><td>래스터 예산</td><td>AI에게 보여 줄 수 있는 그림은 <b>한 번에 한 장</b>이라는 규칙입니다.</td></tr>
+  </table>
+</section>
+
+<div class="en-tldr">
+  <b>TL;DR (English).</b> accurate-screen is a Windows skill for ZCode/GLM sessions that optimizes
+  the app-capture path: it reads text via the accessibility tree in ~40&nbsp;ms with zero images, and
+  captures window content <b>directly from the window's own output buffer by name alone</b> — so
+  occluded windows and continuously-rendering content (video, games) come through complete and
+  live, in ~0.25&nbsp;s. Every capture carries provenance metadata (app, pid, window handle,
+  screen bounds), which eliminated misattribution in a stress test with identical twin windows.
+  It works with or without Computer Use. This page is the beginner manual; see
+  <a href="https://github.com/pnpcrow/accurate-screen">the repository</a> for the skill itself
+  and the measured research notes.
+</div>
+
+<footer>
+  accurate-screen · 연구 문서 <a href="https://github.com/pnpcrow/accurate-screen/tree/main/research">research/</a> ·
+  스킬 본문 <a href="https://github.com/pnpcrow/accurate-screen/tree/main/skills/accurate-screen">skills/accurate-screen/</a> ·
+  <a href="accurate-screen-manual.pdf">PDF 버전 다운로드</a>
+</footer>
+
+</div>
+</body>
+</html>
