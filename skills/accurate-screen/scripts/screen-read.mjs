@@ -137,7 +137,8 @@ async function emitRaster(buffer) {
 
 // ─────────────────────────────────────────────── 타깃 해석
 
-/** 문자열(이름 일부) | pid | {pid, windowId?} → {pid, windowId, bundleId, title, bounds, app} */
+/** 문자열(이름 일부) | pid | {pid, windowId?} → {pid, windowId, bundleId, title, bounds, app}
+ *  문자열은 앱 이름뿐 아니라 **창 제목**도 검색한다 — "윈도우 이름만으로" 캡처 겨냥(연구 07). */
 export async function resolve(target) {
   await loadCache();
   let pid, windowId;
@@ -145,18 +146,36 @@ export async function resolve(target) {
     pid = target;
   } else if (typeof target === "string") {
     const hit = STATE.cache[`name:${target.toLowerCase()}`];
+    let cachedAlive = false;
     if (hit?.pid) {
+      // 캐시된 pid/창이 아직 살아 있는지 검증 — 죽었으면 새로 검색한다.
+      try {
+        cachedAlive = (STATE.addon.listWindows(hit.pid) ?? []).some((w) => w.window_id === hit.windowId);
+      } catch {}
+    }
+    if (cachedAlive) {
       pid = hit.pid;
       windowId = hit.windowId;
     } else {
-      const found = (await apps()).filter((a) => (a.name ?? "").toLowerCase().includes(target.toLowerCase()));
-      if (found.length === 0) throw new Error(`no app matching "${target}" — call apps() for the list`);
-      if (found.length > 1) {
+      const byTitle = (await findWindows(target)).filter((w) => (w.title ?? "").toLowerCase().includes(target.toLowerCase()));
+      const byApp = (await apps()).filter((a) => (a.name ?? "").toLowerCase().includes(target.toLowerCase()));
+      if (byTitle.length === 0 && byApp.length === 0) {
+        throw new Error(`no app or window title matching "${target}" — call apps()/findWindows() for the list`);
+      }
+      if (byApp.length === 1) {
+        pid = byApp[0].pid;
+      } else if (byApp.length > 1) {
         throw new Error(
-          `ambiguous "${target}": ${found.map((a) => `${a.name}(pid ${a.pid})`).join(", ")} — pass a pid`,
+          `ambiguous "${target}": ${byApp.map((a) => `${a.name}(pid ${a.pid})`).join(", ")} — pass a pid`,
+        );
+      } else if (byTitle.length === 1) {
+        pid = byTitle[0].pid;
+        windowId = byTitle[0].windowId;
+      } else {
+        throw new Error(
+          `ambiguous title "${target}": ${byTitle.slice(0, 6).map((w) => `"${w.title}"(pid ${w.pid})`).join(", ")} — pass a pid or fuller title`,
         );
       }
-      pid = found[0].pid;
     }
   } else if (target && typeof target === "object") {
     pid = target.pid;
@@ -169,14 +188,15 @@ export async function resolve(target) {
   let win = windowId != null ? wins.find((w) => w.window_id === windowId) : null;
   if (!win) {
     const usable = wins.filter((w) => !w.cloaked && !w.minimized && w.bounds?.[2] > 50 && w.bounds?.[3] > 50);
-    if (usable.length === 0) {
-      throw new Error(
-        `no renderable window for pid ${pid} (cloaked/minimized). ` +
-          "Pixels are unavailable — use scanText/readPoint (UIA survives backgrounding).",
-      );
+    if (usable.length > 0) {
+      usable.sort((a, b) => b.bounds[2] * b.bounds[3] - a.bounds[2] * a.bounds[3]);
+      win = usable[0];
+    } else {
+      // 렌더링 가능 창이 없어도 출력 버퍼가 살아 있을 수 있다(최소화 등) — 가장 큰 창으로
+      // 시도하고, 실패·빈 캡처는 shot의 blank 감지가 잡는다(연구 07 시험 B).
+      win = wins.filter((w) => w.bounds?.[2] > 0).sort((a, b) => b.bounds[2] * b.bounds[3] - a.bounds[2] * a.bounds[3])[0];
+      if (!win) throw new Error(`no window for pid ${pid} — use scanText/readPoint (UIA path)`);
     }
-    usable.sort((a, b) => b.bounds[2] * b.bounds[3] - a.bounds[2] * a.bounds[3]);
-    win = usable[0];
   }
   const resolved = {
     pid,
@@ -303,7 +323,9 @@ export async function shot(target, opts = {}) {
     pid: r.pid,
     windowId: r.windowId,
     screenBounds: r.bounds,
-    image: { width: outMeta.width, height: outMeta.height, bytes: buffer.length, path },
+    image: { width: outMeta.width, height: outMeta.height, bytes: buffer.length, path, hasAlpha: Boolean(outMeta.hasAlpha) },
+    // hasAlpha=true는 창 자신의 렌더 버퍼에서 온 것(가림 관통), false는 화면 합성일 수 있다.
+    // 어느 쪽이든 내용은 온전하나 프로그램 비교 시 배경 처리가 달라진다(연구 06/07).
     blank,
     ribbon: ribbonHeight > 0,
     method: "captureWindowPngVerifiedAsync",
@@ -457,6 +479,41 @@ export async function apps() {
   return list.map((a) => ({ pid: a.pid, name: a.name, exe: a.bundle_id?.split("\\").pop(), active: a.active }));
 }
 
+/**
+ * 시스템 전체 창을 **제목/앱 이름** 부분문자열로 검색한다 (브로커 없음, ~수 ms).
+ * 가려진(cloaked)·최소화 창도 찾아낸다 — "화면에 안 보여서 찾지 못한다" 문제의 구조적 해법.
+ * 기본은 렌더링 가능 창만, includeHidden: true로 cloaked/minimized까지 포함.
+ */
+export async function findWindows(query, opts = {}) {
+  const q = (query ?? "").toLowerCase();
+  const needle = (s) => (s ?? "").toLowerCase().includes(q);
+  const results = [];
+  for (const a of STATE.addon.listApplications() ?? []) {
+    let wins = [];
+    try {
+      wins = STATE.addon.listWindows(a.pid) ?? [];
+    } catch {
+      continue;
+    }
+    for (const w of wins) {
+      const hidden = Boolean(w.cloaked || w.minimized);
+      if (!opts.includeHidden && hidden) continue;
+      if (q && !needle(w.title) && !needle(a.name)) continue;
+      results.push({
+        pid: a.pid,
+        app: a.name ?? null,
+        windowId: w.window_id,
+        title: w.title ?? "",
+        bounds: w.bounds,
+        cloaked: Boolean(w.cloaked),
+        minimized: Boolean(w.minimized),
+        hidden,
+      });
+    }
+  }
+  return results;
+}
+
 /** 렌더링 가능한 창 목록 (1ms). */
 export async function windows(target) {
   const { pid } = await resolve(target);
@@ -488,7 +545,7 @@ export async function setupScreenRead({ globals = globalThis } = {}) {
   STATE.inited = true;
   const api = {
     setupScreenRead, vision, visionMode,
-    apps, windows, resolve,
+    apps, windows, findWindows, resolve,
     readPoint, scanText,
     shot, crop, fullScreen,
     cache: STATE.cachePath,

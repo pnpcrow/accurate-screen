@@ -68,8 +68,9 @@ CUA 브로커와 무관하므로 Computer Use 미사용 세션에서도 그대�
 vision("vision"|"none", info?): Promise<Record>;  // 비전 게이트 기록(디스크 유지, 세션마다 재판정)
 visionMode(): Promise<Record>;                     // 현재 게이트 조회
 apps(): Promise<AppInfo[]>;                        // GUI 앱 열거 (2ms)
+findWindows(query, {includeHidden}?): Promise<WindowMatch[]>; // 창 제목·앱이름 검색 — 가려진/최소화 창도 발견
 windows(target): Promise<WindowInfo[]>;            // 렌더링 가능 창 (1ms)
-resolve(target): Promise<Resolved>;                // {pid, windowId, bounds, app, title}
+resolve(target): Promise<Resolved>;                // {pid, windowId, bounds, app, title} — 문자열은 앱 이름 **또는 창 제목**
 readPoint(gx, gy): Promise<{element}>;             // 화면 점 UIA 히트테스트 (~36ms)
 scanText(target, {grid?=4, includeOthers?, maxValue?}): Promise<{elements}>; // 창 내 텍스트 일괄 수집 (~100ms)
 shot(target, opts?): Promise<ShotDigest>;          // 창 캡처+digest (기본 emit, ~0.25s)
@@ -77,8 +78,10 @@ crop({rect, from?, zoom?, emit?, maxWidth?}): Promise<CropDigest>;  // UIA rect 
 fullScreen(opts?): Promise<FullScreenDigest>;      // GDI 전체화면 (가림 한계, ~0.7s)
 ```
 
-`target`: 이름 부분문자열 | pid | {pid, windowId?}. 모든 digest에 `app/pid/windowId/screenBounds`
-가 붙는다 — **귀속은 digest에서 인용한다, 픽셀에서 추측하지 않는다.**
+`target`: 이름 부분문자열(앱 이름 또는 **창 제목** — 제목이 유일하면 그것만으로 겨냥 완료) |
+pid | {pid, windowId?}. 모든 digest에 `app/pid/windowId/screenBounds`가 붙는다 — **귀속은
+digest에서 인용한다, 픽셀에서 추측하지 않는다.** `image.hasAlpha`는 캡처가 창 자신의 출력
+버퍼에서 왔음을 나타낸다(가려진 창 판별 지표).
 
 ## 레시피 (계층 순서대로 — 낮은 계층이 성공하면 상위는 생략)
 
@@ -100,7 +103,20 @@ const d = await s.shot("메모장", { ribbon: true });  // digest 근거가 박�
 // 텍스트가 본체라면 maxWidth: 0 (리사이즈 금지, 네이티브 해상도 유지)
 ```
 
-- `d.blank === true` → 렌더링 불가 창(cloaked/최소화). 재시도 금지, Tier 0으로.
+- **이름만으로 겨냥한다(가림 무관)**: 창의 출력 버퍼는 z-order와 무관하게 살아 있으므로,
+  제목이나 앱 이름만으로 가려진 창을 직접 캡처할 수 있다(Claude/Codex 방식 — 연구 07 실증:
+  불투명 창에 완전히 가려진 창·연속 렌더링 창 모두 버퍼에서 온전히 캡처).
+
+  ```js
+  const hits = await s.findWindows("설정");   // 제목/앱이름 검색 — 화면에 안 보여도 찾는다
+  const d = await s.shot(hits[0].title, { ribbon: true }); // 제목 문자열만으로 캡처
+  ```
+
+- **최소화된 창은 예외다**: iconic 상태에서는 출력 버퍼가 해제되어 캡처가 거부된다
+  (`invalid_target`). 이때는 UIA 경로(`scanText`)로 가거나, 정말 픽셀이 필요하면
+  `ShowWindowAsync(hwnd, 9)`으로 복구한 뒤 캡처한다(동기 `ShowWindow`는 타 프로세스에서
+  무시될 수 있다 — 연구 07 시험 B).
+- `d.blank === true` → 렌더링 불가 창(cloaked UWP). 재시도 금지, Tier 0으로.
 - 리본은 캔버스를 **확장해** 붙는다(내용을 덮지 않는다 — 연구 03 M4의 교훈).
 - 비교용 두 이미지가 필요하면 **합성해서 1장으로** 만든다(셀당 래스터 1장 — 두 번째는 삭제된다).
 
@@ -144,7 +160,9 @@ const f = await s.fullScreen();
 1. **의도 먼저**: §1 선언 없이 캡처하지 않는다.
 2. **귀속은 digest에서**: 이미지의 소유 앱을 픽셀로 추측하지 않는다. 리본·digest를 인용한다.
 3. **셀당 래스터 1장**: 두 번째 emit은 삭제된다. 비교는 합성 1장으로.
-4. **가림 함정**: 전체 화면 캡처의 빈 영역을 "내용이 없다"의 근거로 쓰지 않는다. 창 캡처/UIA로 재확인.
+4. **가림 함정**: 창의 내용이 필요하면 전체 화면 경로를 쓰지 않는다 — **창의 출력 버퍼에서
+   직접 캡처한다**(가려진 창도 버퍼는 살아 있다; 연속 렌더링 창·동영상·게임류도 동일 — 연구 07).
+   전체 화면 캡처의 빈 영역을 "내용이 없다"의 근거로 쓰지 않는다. 창 캡처/UIA로 재확인.
 5. **텍스트 8px 법칙**: emit 이미지 안 텍스트 높이 ≥8px(권장 ≥10px). 못 맞추면 크롭으로 면적을 줄인다.
    창 캡처 폭 하한 800px(640px는 붕괴선 — 금지). 축소가 필요 없는 창(≤1280)은 리사이즈하지 않는다.
 6. **인코딩 기본**: 창 캡처 JPEG Q80(판독력 동등, 2–3배 빠름 — 연구 02), 크롭·텍스트 확대는 PNG.

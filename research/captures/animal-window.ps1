@@ -5,7 +5,7 @@
 #   --kind NAME   one of: dog cat rabbit bird fish (random if omitted)
 #   --x/--y/--size  window position (DIP) and size
 $argsv = $args
-$mode = 'background'; $kind = $null; $x = 100; $y = 100; $size = 380
+$mode = 'background'; $kind = $null; $x = 100; $y = 100; $size = 380; $title = ''
 for ($i = 0; $i -lt $argsv.Count; $i++) {
   switch ($argsv[$i]) {
     '--target' { $mode = 'target' }
@@ -14,6 +14,7 @@ for ($i = 0; $i -lt $argsv.Count; $i++) {
     '--x' { $i++; $x = [double]$argsv[$i] }
     '--y' { $i++; $y = [double]$argsv[$i] }
     '--size' { $i++; $size = [double]$argsv[$i] }
+    '--title' { $i++; $title = $argsv[$i] }
   }
 }
 $kinds = @('dog', 'cat', 'rabbit', 'bird', 'fish')
@@ -41,6 +42,7 @@ $img = New-Object System.Windows.Controls.Image
 $img.Source = New-Object System.Windows.Media.Imaging.BitmapImage([Uri]"file:///$base/$kind.png")
 $img.Stretch = [System.Windows.Media.Stretch]::Uniform
 $win.Content = $img
+$win.Title = $title
 $win.Show()
 
 if ($mode -eq 'target') {
