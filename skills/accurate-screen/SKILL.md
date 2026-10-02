@@ -1,6 +1,6 @@
 ---
 name: accurate-screen
-description: "Accurate & fast screen analysis for Windows: UIA text extraction (~40ms, no image), occlusion-proof window capture (~0.22s), UIA-guided crops, provenance ribbons. Use for any 'look at the screen / read this app / analyze screenshot' task — with or without Computer Use. Fixes GLM-family screenshot misreads (occluded content, no-window-border attribution, downscaled text). Windows only. Main agent only."
+description: "Accurate & fast app capture/analysis for GLM (ZCode): UIA text extraction (~40ms, no image), occlusion-proof window-buffer capture BY NAME (~0.25s, works for occluded & continuously-rendering windows), UIA-guided crops, provenance ribbons. Use for any 'look at the screen / read this app / analyze screenshot' task — with or without Computer Use. Windows only. / GLM(ZCode) 세션에서 앱 화면 캡처·분석 경로를 최적화하는 스킬: UIA 텍스트 추출, 이름만으로 가려진 창도 출력 버퍼에서 직접 캡처. Computer Use 사용 여부와 무관하게 동작. / GLMセッション向けアプリ画面キャプチャ・解析の最適化スキル。窓が隠れても名前だけで出力バッファから直接キャプチャ。 / 优化 GLM 会话应用屏幕捕获与分析路径的技能：即使窗口被遮挡，也能按名称直接从输出缓冲区捕获。 Main agent only."
 ---
 
 # Accurate Screen (Windows 정밀 화면 분석)
