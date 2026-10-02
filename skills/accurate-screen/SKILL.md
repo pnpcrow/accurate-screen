@@ -150,6 +150,9 @@ const f = await s.fullScreen();
 6. **인코딩 기본**: 창 캡처 JPEG Q80(판독력 동등, 2–3배 빠름 — 연구 02), 크롭·텍스트 확대는 PNG.
 7. **빈 캡처·실패**: `blank:true`/`ok:false`면 재시도 1회까지, 그래도 아니면 UIA 경로로 전환.
    애드온/broker 오류 반복 시 기본 computer-use 스킬로 폴백하고 결과를 보고.
+8. **쌍둥이 창 금지**: 똑같이 생긴 창이 여러 개면 겉모습으로 고르지 않는다 — 반드시
+   pid/windowId로 겨냥하고, 캡처 digest의 `screenBounds`·`windowId`가 타깃과 일치하는지
+   단언한다(귀속 스트레스 시험 연구 06 — 동일 이미지 쌍둥이에서 픽셀 선택은 원리적으로 불가).
 
 ## 성능 참고 (전 과정 실측 — research/04-benchmark.md)
 
